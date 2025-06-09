@@ -1,10 +1,6 @@
 pipeline {
     agent any // You can specify a specific agent label if needed, e.g., agent { label 'terraform-agent' }
 
-    environment {
-        // No specific cloud provider credentials needed for local_file.
-        // If your Git repo is private, the 'credentialsId' will be used in the 'git' step.
-    }
 
     stages {
         stage('Checkout Code') {
