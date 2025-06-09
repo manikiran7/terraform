@@ -56,7 +56,7 @@ pipeline {
             echo 'local_file Terraform pipeline completed successfully!'
             // Send Slack notification on success
             slackSend(
-                channel: '#your-slack-channel', // Replace with your Slack channel name, e.g., '#devops-alerts'
+                channel: '#team', // Replace with your Slack channel name, e.g., '#devops-alerts'
                 color: 'good',
                 message: "SUCCESS: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} completed successfully!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
@@ -67,7 +67,7 @@ pipeline {
             echo 'local_file Terraform pipeline failed!'
             // Send Slack notification on failure
             slackSend(
-                channel: '#your-slack-channel', // Replace with your Slack channel name
+                channel: '#team', // Replace with your Slack channel name
                 color: 'danger',
                 message: "FAILURE: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} failed!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
