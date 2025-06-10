@@ -67,7 +67,7 @@ pipeline {
             // Ensure Slack plugin is installed and configured (Manage Jenkins -> Configure System -> Slack)
             // 'slack-token' must be a Secret Text credential in Jenkins.
             slackSend(
-                channel: '#devops-alerts', // Recommended a dedicated channel for alerts
+                channel: '#team', // Recommended a dedicated channel for alerts
                 color: 'good',
                 message: "SUCCESS: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} completed successfully!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
@@ -77,7 +77,7 @@ pipeline {
         failure {
             echo 'local_file Terraform pipeline failed!'
             slackSend(
-                channel: '#devops-alerts', // Recommended a dedicated channel for alerts
+                channel: '#team', // Recommended a dedicated channel for alerts
                 color: 'danger',
                 message: "FAILURE: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} failed!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
