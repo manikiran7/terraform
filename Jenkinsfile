@@ -1,49 +1,59 @@
 pipeline {
     agent any // You can specify a specific agent label if needed, e.g., agent { label 'terraform-agent' }
 
+    // IMPORTANT: Add the 'tools' block here to tell Jenkins to use your configured Terraform installation
+    tools {
+        // 'terraform-usr' should match the 'Name' you gave in "Manage Jenkins > Global Tool Configuration"
+        terraform 'terraform-usr'
+    }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // Using your specified Git URL and credential ID
+                // Ensure the 'github-manikiran7-pat' credential is configured in Jenkins.
+                // Double-check the branch name: 'main' vs. 'master' based on your repo's default branch.
                 git branch: 'main', credentialsId: 'github-manikiran7-pat', url: 'https://github.com/manikiran7/terraform.git'
-                // IMPORTANT: Ensure 'main' is the correct branch name. Change to 'master' if needed.
-                // The 'github-manikiran7-pat' credential must be configured in Jenkins Credentials.
             }
         }
 
         stage('Terraform Init') {
             steps {
-                script {
-                    sh 'terraform init'
-                }
+                sh 'terraform init'
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                script {
-                    sh 'terraform plan -out=tfplan'
-                }
+                sh 'terraform plan -out=tfplan'
+                // Optionally, you might want to archive the plan artifact for review.
+                // archiveArtifacts artifacts: 'tfplan', fingerprint: true
             }
         }
 
         stage('Terraform Apply (Manual Approval)') {
             steps {
+                // Manual input for approval
                 input message: 'Proceed with Terraform Apply for local_file?', ok: 'Apply'
-                script {
-                    sh 'terraform apply -auto-approve tfplan'
-                }
+                sh 'terraform apply -auto-approve tfplan' // Apply using the saved plan
+            }
+            // Add a 'when' condition if you only want this to run if the plan stage was successful
+            when {
+                expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
             }
         }
 
-        // Optional: Stage to destroy the resource
-        stage('Terraform Destroy (Manual Approval)') {
+        stage('Verify File Creation') {
             steps {
-                input message: 'DO YOU REALLY WANT TO DESTROY THE LOCAL FILE?', ok: 'Destroy'
-                script {
-                    sh 'terraform destroy -auto-approve'
-                }
+                echo 'Verifying if pets.txt was created...'
+                // Use 'ls' to list files in the workspace (where pets.txt should be created)
+                sh 'ls -l pets.txt'
+                // Use 'cat' to display the content of the file
+                sh 'cat pets.txt'
+                echo 'File verification complete.'
+            }
+            // Only run this stage if the apply stage was successful
+            when {
+                expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
             }
         }
     }
@@ -54,24 +64,24 @@ pipeline {
         }
         success {
             echo 'local_file Terraform pipeline completed successfully!'
-            // Send Slack notification on success
+            // Ensure Slack plugin is installed and configured (Manage Jenkins -> Configure System -> Slack)
+            // 'slack-token' must be a Secret Text credential in Jenkins.
             slackSend(
-                channel: '#team', // Replace with your Slack channel name, e.g., '#devops-alerts'
+                channel: '#devops-alerts', // Recommended a dedicated channel for alerts
                 color: 'good',
                 message: "SUCCESS: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} completed successfully!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
-                tokenCredentialId: 'slack-token' // Use your specified Slack token credential ID
+                tokenCredentialId: 'slack-token'
             )
         }
         failure {
             echo 'local_file Terraform pipeline failed!'
-            // Send Slack notification on failure
             slackSend(
-                channel: '#team', // Replace with your Slack channel name
+                channel: '#devops-alerts', // Recommended a dedicated channel for alerts
                 color: 'danger',
                 message: "FAILURE: Terraform pipeline for ${env.JOB_NAME} build ${env.BUILD_NUMBER} failed!" +
                          "\nJenkins URL: ${env.BUILD_URL}",
-                tokenCredentialId: 'slack-token' // Use your specified Slack token credential ID
+                tokenCredentialId: 'slack-token'
             )
         }
     }
