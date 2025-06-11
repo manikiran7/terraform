@@ -48,6 +48,9 @@ pipeline {
     }
 
     post {
+        always{
+            cleanWs()
+        }
         success {
             echo 'local_file Terraform pipeline completed successfully!'
             slackSend(
